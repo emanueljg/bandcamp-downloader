@@ -18,5 +18,5 @@ requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
-bandcamp-downloader = "bandcamp-downloader.bandcamp_downloader:main"
+bandcamp-downloader = "bandcamp_downloader.bandcamp_downloader:main"
 
