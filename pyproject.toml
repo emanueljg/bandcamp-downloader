@@ -3,7 +3,7 @@ name = "bandcamp-downloader"
 version = "0.1.0"
 description = ""
 authors = []
-packages = [{include = "bandcamp-downloader"}]
+packages = [{include = "bandcamp_downloader"}]
 
 
 [tool.poetry.dependencies]
