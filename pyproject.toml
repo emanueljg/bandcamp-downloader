@@ -3,6 +3,8 @@ name = "bandcamp-downloader"
 version = "0.1.0"
 description = ""
 authors = []
+packages = [{include = "bandcamp-downloader"}]
+
 
 [tool.poetry.dependencies]
 python = "^3.9"
