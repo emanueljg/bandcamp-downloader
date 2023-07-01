@@ -323,7 +323,7 @@ def sanitize_path(_path : str) -> str:
 def get_cookies():
     if CONFIG['COOKIES']:
         cj = http.cookiejar.CookieJar()
-        with open(CONFIG['BROWSER']) as f:
+        with open(CONFIG['COOKIES']) as f:
             print(f.readlines())
             for line in f:
                 if line.startswith('.'):
