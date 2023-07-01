@@ -323,7 +323,10 @@ def sanitize_path(_path : str) -> str:
 def get_cookies():
     if CONFIG['COOKIES']:
         cj = http.cookiejar.MozillaCookieJar(CONFIG['COOKIES'])
-        cj.load(ignore_discard=True, ignore_expires=True)
+        with open("/tmp/tmp.qqT284rLmu", "r") as f:
+            cookies_data = f.read()
+        cookies_data = cookies_data.replace("\\t", "\t")
+        cj.set_cookie_from_string(cookies_data)
         return cj
 
     try:
