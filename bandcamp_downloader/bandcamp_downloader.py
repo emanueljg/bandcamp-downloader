@@ -323,7 +323,7 @@ def sanitize_path(_path : str) -> str:
 def get_cookies():
     if CONFIG['COOKIES']:
         cj = http.cookiejar.MozillaCookieJar(CONFIG['COOKIES'])
-        cj.load()
+        cj.load(ignore_discard=True, ignore_expires=True)
         return cj
 
     try:
