@@ -324,7 +324,9 @@ def get_cookies():
     if CONFIG['COOKIES']:
         cj = http.cookiejar.CookieJar()
         with open('/tmp/tmp.qqT284rLmu') as f:
-            for line in f[1:]:
+            for line in f:
+                if line.startswith('#'):
+                    continue
                 domain, flags, path, secure, expiry, name, value = line.strip().split('\t')
                 cj.set_cookie(http.cookiejar.Cookie(0, name, value,
                                                     domain,
