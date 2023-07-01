@@ -10,6 +10,7 @@ import sys
 import time
 import urllib.parse
 import traceback
+import zipfile
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -34,6 +35,7 @@ CONFIG = {
     'MAX_URL_ATTEMPTS' : 5,
     'URL_RETRY_WAIT' : 5,
     'POST_DOWNLOAD_WAIT' : 1,
+    'UNZIP_TO': None
 }
 MAX_THREADS = 32
 DEFAULT_THREADS = 5
@@ -119,6 +121,18 @@ def main() -> int:
         default = 5,
         help = 'How long, in seconds, to wait before trying to download a file again after a failure. Defaults to \'5\'.',
     )
+    parser.add_argument(
+        '--unzip-to',
+        type = str,
+        default = None,
+        help = 'Unzip albums to target path. Defaults to not unzipping at all.'
+    )
+    parser.add_argument(
+        '--force-unzip',
+        action = 'store_true',
+        default = False,
+        help = 'Force unzipping even in no download occured. Defaults to not force zipping'
+    )
     parser.add_argument('--verbose', '-v', action='count', default = 0)
     args = parser.parse_args()
 
@@ -126,12 +140,14 @@ def main() -> int:
         parser.error('--parallel-downloads must be between 1 and 32.')
 
     CONFIG['COOKIES'] = args.cookies
-    CONFIG['VERBOSE'] = args.verbose
+    CONFIG['VERBOSE'] = 3
     CONFIG['OUTPUT_DIR'] = os.path.normcase(args.directory)
     CONFIG['FILENAME_FORMAT'] = args.filename_format
     CONFIG['BROWSER'] = args.browser
     CONFIG['FORMAT'] = args.format
     CONFIG['FORCE'] = args.force
+    CONFIG['UNZIP_TO'] = args.unzip_to
+    CONFIG['FORCE_UNZIP'] = args.force_unzip
 
     if args.wait_after_download < 0:
         parser.error('--wait-after-download must be at least 0.')
@@ -270,6 +286,9 @@ def download_file(_url : str, _track_info : dict = None, _attempt : int = 1) -> 
             # Remove not allowed path characters
             file_path = sanitize_path(file_path)
 
+            should_do_download = True
+            download_has_happened = False
+
             if os.path.exists(file_path):
                 if CONFIG['FORCE']:
                     if CONFIG['VERBOSE']: CONFIG['TQDM'].write('--force flag was given. Overwriting existing file at [{}].'.format(file_path))
@@ -277,18 +296,34 @@ def download_file(_url : str, _track_info : dict = None, _attempt : int = 1) -> 
                     actual_size = os.stat(file_path).st_size
                     if expected_size == actual_size:
                         if CONFIG['VERBOSE'] >= 3: CONFIG['TQDM'].write('Skipping album that already exists: [{}]'.format(file_path))
-                        return
+                        should_do_download = False
                     else:
                         if CONFIG['VERBOSE'] >= 2: CONFIG['TQDM'].write('Album at [{}] is the wrong size. Expected [{}] but was [{}]. Re-downloading.'.format(file_path, expected_size, actual_size))
 
-            if CONFIG['VERBOSE'] >= 2: CONFIG['TQDM'].write('Album being saved to [{}]'.format(file_path))
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            with open(file_path, 'wb') as fh:
-                for chunk in response.iter_content(chunk_size=8192):
-                    fh.write(chunk)
-                actual_size = fh.tell()
-            if expected_size != actual_size:
-                raise IOError('Incomplete read. {} bytes read, {} bytes expected'.format(actual_size, expected_size))
+            if should_do_download or CONFIG['FORCE']:
+                if CONFIG['VERBOSE'] >= 2: CONFIG['TQDM'].write('Album being saved to [{}]'.format(file_path))
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, 'wb') as fh:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        fh.write(chunk)
+                    actual_size = fh.tell()
+                    download_has_happened = True
+                if expected_size != actual_size:
+                    raise IOError('Incomplete read. {} bytes read, {} bytes expected'.format(actual_size, expected_size))
+
+            if all((
+                CONFIG['UNZIP_TO'],
+                extension == '.zip',
+                download_has_happened or CONFIG['FORCE_UNZIP'],
+            )):
+                artist, album = _track_info['artist'], _track_info['title']
+                artist_dir = os.path.join(CONFIG['UNZIP_TO'], artist)
+                os.makedirs(artist_dir, exist_ok=True)
+                album_dir = os.path.join(artist_dir, album)
+            
+                with zipfile.ZipFile(file_path, 'r') as zip:
+                    zip.extractall(album_dir)
+                    
     except IOError as e:
         if _attempt < CONFIG['MAX_URL_ATTEMPTS']:
             if CONFIG['VERBOSE'] >=2: CONFIG['TQDM'].write('WARN: I/O Error on attempt # [{}] to download the file at [{}]. Trying again...'.format(_attempt, _url))
