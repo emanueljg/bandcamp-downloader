@@ -327,7 +327,7 @@ def get_cookies():
             lines = [
                 line.replace(r'\\t', r'\t')
                 for line in f.readlines()
-                if not line.startsWith('#')
+                if not line.startswith('#')
             ]
             print(lines)
             for line in lines:
