@@ -322,12 +322,17 @@ def sanitize_path(_path : str) -> str:
 
 def get_cookies():
     if CONFIG['COOKIES']:
-        cj = http.cookiejar.MozillaCookieJar(CONFIG['COOKIES'])
-        with open(CONFIG['COOKIES'], "r") as f:
-            cookies_data = f.read()
-        cookies_data = cookies_data.replace("\\t", "\t")
-        cj.set_cookie_from_string(cookies_data)
-        return cj
+        cj = http.cookiejar.CookieJar()
+        with open('/tmp/tmp.qqT284rLmu') as f:
+            for line in f:
+                domain, flags, path, secure, expiry, name, value = line.strip().split('\t')
+                cj.set_cookie(http.cookiejar.Cookie(0, name, value,
+                                                    domain,
+                                                    domain.startswith('.'),
+                                                    path,
+                                                    secure == 'TRUE',
+                                                    expiry))
+                return cj
 
     try:
         func = getattr(browser_cookie3, CONFIG['BROWSER'])
