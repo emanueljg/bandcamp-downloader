@@ -324,17 +324,17 @@ def get_cookies():
     if CONFIG['COOKIES']:
         cj = http.cookiejar.CookieJar()
         with open('/tmp/tmp.qqT284rLmu') as f:
+            print(f.readlines())
             for line in f:
-                if line.startswith('#'):
-                    continue
-                domain, flags, path, secure, expiry, name, value = line.strip().split('\t')
-                cj.set_cookie(http.cookiejar.Cookie(0, name, value,
-                                                    domain,
-                                                    domain.startswith('.'),
-                                                    path,
-                                                    secure == 'TRUE',
-                                                    expiry))
-                return cj
+                if line.startswith('.'):
+                    domain, flags, path, secure, expiry, name, value = line.strip().split('\t')
+                    cj.set_cookie(http.cookiejar.Cookie(0, name, value,
+                                                        domain,
+                                                        domain.startswith('.'),
+                                                        path,
+                                                        secure == 'TRUE',
+                                                        expiry))
+                    return cj
 
     try:
         func = getattr(browser_cookie3, CONFIG['BROWSER'])
