@@ -331,7 +331,7 @@ def get_cookies():
             ]
             print(lines)
             for line in lines:
-                domain, flags, path, secure, expiry, name, value = line.strip().split('\t')
+                domain, flags, path, secure, expiry, name, value = line.strip().split(r'\t')
                 cj.set_cookie(http.cookiejar.Cookie(0, name, value,
                                                     domain,
                                                     domain.startswith('.'),
